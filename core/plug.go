@@ -8,5 +8,5 @@ type PluginHandler func(c *Core)
 
 type Plugin struct {
 	Runtime bool
-	PluginHandler
+	Handler PluginHandler
 }

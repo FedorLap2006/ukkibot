@@ -14,6 +14,7 @@ type Core struct {
 }
 
 type moduleInitHandler func(*Core)
+
 var modulesInitHandlers []moduleInitHandler
 
 func init() {

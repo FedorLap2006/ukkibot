@@ -10,7 +10,7 @@ import (
 type CommandHandler func(message *Discord.Message, args []string)
 
 
-func __REH__messageCreate(c *Core, event *Event) {
+func peh_messageCreate(c *Core, event *Event) {
 	_callHighLevelEventHandler(c,event)
 
 	rch := event.Data.(*Discord.MessageCreate)
