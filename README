@@ -1,0 +1,10 @@
+Ukki Universal Combine Discord Bot
+----------------------------------
+
+Build Dependencies:
+  * go
+Runtime Dependencies:
+  * MySql / PostgreSql / MongoDB
+
+Installation:
+  go install
