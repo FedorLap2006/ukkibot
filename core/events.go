@@ -16,6 +16,7 @@ type EventHandler func(*Core, *Event)
 const (
 	EVENT_MESSAGE_CREATE = "messageCreate"
 	EVENT_MESSAGE_DELETE = "messageDelete"
+	EVENT_MESSAGE_UPDATE = "messageUpdate"
 )
 
 // var lleventHandlers map[string]EventHandler
@@ -30,8 +31,8 @@ func (c *Core) RegEventHandler(event string, eh EventHandler) {
 }
 
 func _call_llEventHandler(c *Core,event string, data interface{}) {
-	if eh, ok := c.llEventHandlers["messageCreate"]; ok {
-		eh(c, &Event{ Client: c.Client, Type: event, Data: data})
+	if eh, ok := c.llEventHandlers[event]; ok {
+		go eh(c, &Event{ Client: c.Client, Type: event, Data: data})
 	}
 }
 
@@ -41,6 +42,8 @@ func (c *Core) llBaseEventHandler(client *Discord.Session, event interface{}) {
 		_call_llEventHandler(c,EVENT_MESSAGE_CREATE,event.(*Discord.MessageCreate))
 		// c.llEventHandlers["messageCreate"](c, &Event{ Client: client, Type: EVENT_MESSAGE_CREATE, Data: event.(*Discord.MessageCreate)})
 	case *Discord.MessageUpdate:
+		_call_llEventHandler(c,EVENT_MESSAGE_UPDATE,event.(*Discord.MessageUpdate))
+	case *Discord.MessageDelete:
 		_call_llEventHandler(c,EVENT_MESSAGE_DELETE,event.(*Discord.MessageDelete))
 	}
 }
@@ -49,7 +52,7 @@ func (c *Core) llBaseEventHandler(client *Discord.Session, event interface{}) {
 
 func _callHighLevelEventHandler(c *Core, event *Event) {
 	if eh, ok := c.hlEventHandlers[event.Type]; ok {
-		eh(c,event)
+		go eh(c,event)
 	}
 }
 

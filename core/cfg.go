@@ -9,7 +9,8 @@ type CoreCfg struct {
 	Prefix string
 	Plugins []Plugin
 	Events map[string]EventHandler
-	Commands map[string]CommandHandler
+	Commands map[string]Command
+	Payload interface{}
 }
 
 

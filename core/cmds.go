@@ -3,11 +3,20 @@ package core
 import (
 	Discord "github.com/bwmarrin/discordgo"
 	strs "strings"
-	"regexp"
+	//"regexp"
 	//"log"
 )
 
-type CommandHandler func(message *Discord.Message, args []string)
+type CommandHandler func(s *Discord.Session, message *Discord.Message, args []string)
+
+type Command struct {
+	Name string
+	Usage string
+	Enabled bool
+	Handler CommandHandler
+	Aliases []string
+	Payload interface{}
+}
 
 
 func peh_messageCreate(c *Core, event *Event) {
@@ -24,15 +33,28 @@ func peh_messageCreate(c *Core, event *Event) {
 
 	cmd := args[0]
 	args = args[1:]
-
-	if ch, ok := c.Cfg.Commands[cmd]; ok {
-		ch(rch.Message, args)
+	for _, ci := range c.Cfg.Commands {
+		if !ci.Enabled {
+			continue
+		}
+		
+		if ci.Name == cmd {
+			ci.Handler(c.Client, rch.Message, args)
+		} else {
+			if ci.Aliases == nil {
+				continue
+			}
+			for _, alias := range ci.Aliases {
+				if alias == cmd {
+					ci.Handler(c.Client, rch.Message, args)
+				}
+			}
+		}
 	}
 }
 
 func _msgCommandParse(msg string) []string {
-	re := regexp.MustCompile("\\s")
-	args := re.Split(msg, -1)
+	args := strs.Fields(msg)
 	return args
 }
 

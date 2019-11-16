@@ -3,14 +3,17 @@ package core
 import (
 	Discord "github.com/bwmarrin/discordgo"
 	"errors"
+	"time"
 )
 
 type Core struct {
 	Cfg *CoreCfg
 	Client *Discord.Session
-	rtCrc <-chan bool
+	rtCrc chan bool
+	running bool
 	llEventHandlers map[string]EventHandler
 	hlEventHandlers map[string]EventHandler
+	Payload interface{}
 }
 
 type moduleInitHandler func(*Core)
@@ -30,21 +33,41 @@ func (c *Core) Init() {
 		m(c)
 	}
 	for _, p := range c.Cfg.Plugins {
-		if(!p.Runtime) p.Handler(c)
+		if !p.Enabled {
+			continue
+		}
+		if !p.Runtime {
+			p.Handler(c)
+		}
 	}
 	for k, eh := range c.Cfg.Events {
 		c.RegEventHandler(k,eh)
 	}
 }
 
-func (c *Core) runtimeThread(crc <-chan bool) {
+func (c *Core) runtimeThread() {
 	for {
-		select {
-		case _ := <-crc:
+		if !c.running {
 			return
-		default:
-			for _, p := range c.Cfg.Plugins {
-				if(p.Runtime) p.Handler(c)
+		}
+		time.Sleep(255 * time.Millisecond)
+		for _, p := range c.Cfg.Plugins {
+			if !p.Enabled {
+				continue
+			}
+			if p.Runtime {
+				if p.FinishChnl == nil {
+					p.FinishChnl = make(chan bool, 1)
+				}
+				select {
+					case _ = <-p.FinishChnl:
+						go func() {
+							p.Handler(c)
+							p.FinishChnl <- true
+						}()
+					default:
+						continue
+				}
 			}
 		}
 	}
@@ -65,13 +88,15 @@ func(c *Core) Run() error {
 		return err
 	}
 
-	go runtimeThread(c.rtCrc)
+	go c.runtimeThread()
+	c.running = true
 
 	return nil
 
 }
 
 func(c *Core) Stop() error {
-	c.rtCrc <- true
-	return c.Client.Close()
+	err := c.Client.Close()
+	c.running = false
+	return err
 }

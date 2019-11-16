@@ -1,7 +1,7 @@
 package main
 
 import (
-	Discord "github.com/bwmarrin/discordgo"
+	//Discord "github.com/bwmarrin/discordgo"
 )
 
 
